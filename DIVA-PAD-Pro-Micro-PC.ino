@@ -1,5 +1,4 @@
 #include "HID-Project.h"
-#include "Adafruit_NeoPixel.h"
 #include <Wire.h>
 
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
@@ -46,11 +45,6 @@
 #define START_PIN 15
 #define ENABLE_PIN 16
 
-#define CIRCLE_LED_PIN 18
-#define CROSS_LED_PIN 19
-#define SQUARE_LED_PIN 20
-#define TRIANGLE_LED_PIN 21
-
 #define BUTTON_NUM 5
 #define LED_NUM 4
 #define LED_STRIP_NUM 30
@@ -65,7 +59,7 @@ const unsigned char axis_serial_table[8] = {
 };
 
 const unsigned char button_direct_table[8] = {
-	TRIANGLE, SQUARE, CROSS, CIRCLE, PS, 0, 0, 0
+	TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, 0, 0, 0
 };
 
 const unsigned char button_direct_logic = 0b00001000;
@@ -74,20 +68,12 @@ const int button_direct_pin_table[BUTTON_NUM] = {
 	TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN
 };
 
-const int led_direct_pin_table[LED_NUM] = {
-	TRIANGLE_LED_PIN, SQUARE_LED_PIN, CROSS_LED_PIN, CIRCLE_LED_PIN
-};
-
 unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_STRIP_NUM, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
-
-void selfTestLEDs(void);
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
-void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte);
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
@@ -96,36 +82,25 @@ void setup(void) {
 	for(int i = 0; i < BUTTON_NUM; i++) {
 		pinMode(button_direct_pin_table[i], INPUT_PULLUP);
 	}
-	for(int i = 0; i < LED_NUM; i++) {
-		pinMode(led_direct_pin_table[i], OUTPUT);
-	}
 	pinMode(TIMING_CHECK_PIN, OUTPUT);
 	pinMode(ENABLE_PIN, INPUT_PULLUP);
 	pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
-	// pinMode(PWM_PIN, OUTPUT);
-	// digitalWrite(PWM_PIN, HIGH);
-	analogWrite(PWM_PIN, 255);
 	Serial.begin(115200);
 	Wire.begin(); //このボードをI2Cマスターとして設定
 	Wire.setClock(400000L);
 	Gamepad.begin();
-	strip.begin();
-	strip.setBrightness(128);
-	strip.show();
-	selfTestLEDs();
 }
 
 void loop(void) {
 	digitalWrite(TIMING_CHECK_PIN, 1);
-	if(!digitalRead(ENABLE_PIN)) {
+	if(digitalRead(ENABLE_PIN)) {
 		data_bytes_count = 0;
 		for(int i = 0; i < BUFFER_SIZE; i++) {
 			serial_data_byte[i] = 0;
 		}
 		Wire.requestFrom(PSOC_I2C_SLAVE_ADDRESS, BUFFER_SIZE);
 		button_data_byte = readDirectlyConnectedButtons(button_direct_pin_table, button_direct_logic);
-		writeDirectlyConnectedLEDs(led_direct_pin_table, button_data_byte);
-		while(Wire.available() && data_bytes_count < BUFFER_SIZE) { // シリアルで何らかの信号を受け取ったとき...
+		while(Wire.available() && data_bytes_count < BUFFER_SIZE) {
 			serial_data_byte[data_bytes_count] = Wire.read();
 			data_bytes_count++;
 		}
@@ -134,45 +109,11 @@ void loop(void) {
 		}
 		addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
 		addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
-		int touched = 0;
-		for(int i = 0; i < BUFFER_SIZE - 1; i++) {
-			for(int j = 0; j < 8; j++) {
-				if((serial_data_byte[i + 1] >> (7 - j)) & 0x01) {
-					strip.setPixelColor(i * 8 + j, 0x80, 0xFF, 0xCC);
-					touched = 1;
-				} else {
-					strip.setPixelColor(i * 8 + j, 0x0E, 0x10, 0x10);
-				}
-			}
-		}
-		if(touched == 0) {
-			for(int i = 0; i < LED_STRIP_NUM; i++) {
-				strip.setPixelColor(i, 0x1C, 0x20, 0x20);
-			}
-		}
 		digitalWrite(TIMING_CHECK_PIN, 0);
 	} else {
 		Gamepad.releaseAll();
 	}
-	strip.show();
 	Gamepad.write();
-}
-
-void selfTestLEDs(void) {
-	unsigned char data_byte;
-	for(int i = 0; i < LED_NUM + 1; i++) {
-		data_byte = 0x01 << (7 - i);
-		writeDirectlyConnectedLEDs(led_direct_pin_table, data_byte);
-		delay(200);
-	}
-	for(int i = 0; i < LED_STRIP_NUM; i++) {
-		for(int j = 0; j < LED_STRIP_NUM; j++) {
-			strip.setPixelColor(j, 0);
-		}
-		strip.setPixelColor(i, 0xFF, 0xFF, 0xFF);
-		strip.show();
-		delay(50);
-	}
 }
 
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic) {
@@ -181,12 +122,6 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
 		result |= (digitalRead(pin_table[i]) << (7 - i));
 	}
 	return result ^ pin_logic;
-}
-
-void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte) {
-	for(int i = 0; i < LED_NUM; i++) {
-		digitalWrite(led_table[i], !((led_data_byte >> (7 - i)) & 0x01));
-	}
 }
 
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
