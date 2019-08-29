@@ -160,9 +160,9 @@ void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *bu
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
 	for(int i = 0; i < contents_of_table_num; i++) {
 		if((serial_data_byte >> (7 - i)) & 0x01) {
-			Gamepad.press(button_table[i]);
+      Gamepad.release(button_table[i]);
 		} else {
-			Gamepad.release(button_table[i]);
+			Gamepad.press(button_table[i]);
 		}
 	}
 }
