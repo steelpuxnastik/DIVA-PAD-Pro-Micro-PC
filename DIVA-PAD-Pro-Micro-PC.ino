@@ -85,6 +85,7 @@ void setup(void) {
 	pinMode(TIMING_CHECK_PIN, OUTPUT);
 	pinMode(ENABLE_PIN, INPUT_PULLUP);
 	pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
+  //pinMode(START_PIN, LOW);
 	Serial.begin(115200);
 	Wire.begin(); //このボードをI2Cマスターとして設定
 	Wire.setClock(400000L);
@@ -158,7 +159,7 @@ void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *bu
 }
 
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
-	for(int i = 0; i < contents_of_table_num; i++) {
+	for(int i = 0; i < contents_of_table_num; i++) { //поставить i < contents_of_table_num-1 чтоб проверить работает ли кнопка если убрать ее из цикла? Потому что так она ведет себя как положено, но неизвестно, будет ли работать в принципе
 		if((serial_data_byte >> (7 - i)) & 0x01) {
       Gamepad.release(button_table[i]);
 		} else {
