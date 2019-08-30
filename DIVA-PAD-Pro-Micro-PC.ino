@@ -31,21 +31,24 @@
 
 #define TOUCH 14
 #define PS 13
+#define FAKE 33
 
 #define CIRCLE_PIN 4
 #define CROSS_PIN 5
 #define SQUARE_PIN 6
 #define TRIANGLE_PIN 7
+#define FAKE_PIN 18
+#define START_PIN 9
+#define L1_PIN 15
+#define R1_PIN 18
 
 #define LED_STRIP_PIN 0
 #define TIMING_CHECK_PIN 8
-#define PWM_PIN 9
 #define SERIAL_DEBUG_PIN 10
 #define EXT_POWER_CHECK_PIN 14
-#define START_PIN 15
 #define ENABLE_PIN 16
 
-#define BUTTON_NUM 5
+#define BUTTON_NUM 8
 #define LED_NUM 4
 #define LED_STRIP_NUM 30
 
@@ -59,13 +62,13 @@ const unsigned char axis_serial_table[8] = {
 };
 
 const unsigned char button_direct_table[8] = {
-	TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, 0, 0, 0
+	TRIANGLE, SQUARE, CROSS, CIRCLE, FAKE, OPTION, L1, R1
 };
 
 const unsigned char button_direct_logic = 0b00001000;
 
 const int button_direct_pin_table[BUTTON_NUM] = {
-	TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN
+	TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, FAKE_PIN, START_PIN, L1_PIN, R1_PIN
 };
 
 unsigned char button_data_byte = 0;
@@ -85,8 +88,7 @@ void setup(void) {
 	pinMode(TIMING_CHECK_PIN, OUTPUT);
 	pinMode(ENABLE_PIN, INPUT_PULLUP);
 	pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
-  //pinMode(START_PIN, LOW);
-	Serial.begin(115200);
+	Serial.begin(9600);
 	Wire.begin(); //このボードをI2Cマスターとして設定
 	Wire.setClock(400000L);
 	Gamepad.begin();
@@ -105,9 +107,9 @@ void loop(void) {
 			serial_data_byte[data_bytes_count] = Wire.read();
 			data_bytes_count++;
 		}
-		if(!digitalRead(SERIAL_DEBUG_PIN)) {
-			sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);
-		}
+  	if(!digitalRead(SERIAL_DEBUG_PIN)) {
+  	  sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
+  	}
 		addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
 		addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
 		digitalWrite(TIMING_CHECK_PIN, 0);
@@ -159,12 +161,12 @@ void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *bu
 }
 
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
-	for(int i = 0; i < contents_of_table_num; i++) { //поставить i < contents_of_table_num-1 чтоб проверить работает ли кнопка если убрать ее из цикла? Потому что так она ведет себя как положено, но неизвестно, будет ли работать в принципе
-		if((serial_data_byte >> (7 - i)) & 0x01) {
-      Gamepad.release(button_table[i]);
-		} else {
-			Gamepad.press(button_table[i]);
-		}
+	for(int i = 0; i < contents_of_table_num; i++) {
+	  if((serial_data_byte >> (7 - i)) & 0x01) {
+	    Gamepad.release(button_table[i]);
+	    } else {
+	      Gamepad.press(button_table[i]);
+	      }
 	}
 }
 
