@@ -79,6 +79,7 @@ unsigned char serial_data_byte[BUFFER_SIZE] = {};
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 
 void setup(void) {
@@ -112,6 +113,7 @@ void loop(void) {
   	}
 		addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
 		addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
+    addHIDCypressLRReportFromTable(serial_data_byte[0], button_direct_table, BUTTON_NUM);
 		digitalWrite(TIMING_CHECK_PIN, 0);
 	} else {
 		Gamepad.releaseAll();
@@ -158,6 +160,33 @@ void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *bu
 	if((serial_data_byte >> 0) & 0x01) {
 		Gamepad.rxAxis(MAX16);
 	}
+}
+
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
+  if((serial_data_byte >> 7) & 0x01) {
+    Gamepad.press(button_table[0]);
+  }
+  if((serial_data_byte >> 6) & 0x01) {
+    Gamepad.press(button_table[1]);
+  }
+  if((serial_data_byte >> 5) & 0x01) {
+    Gamepad.press(button_table[2]);
+  }
+  if((serial_data_byte >> 4) & 0x01) {
+    Gamepad.press(button_table[3]);
+  }
+  if((serial_data_byte >> 3) & 0x01) {
+    Gamepad.press(button_table[4]);
+  }
+  if((serial_data_byte >> 2) & 0x01) {
+    Gamepad.press(button_table[5]);
+  }
+  if((serial_data_byte >> 1) & 0x01) {
+    Gamepad.press(button_table[6]);
+  }
+  if((serial_data_byte >> 0) & 0x01) {
+    Gamepad.press(button_table[7]);
+  }
 }
 
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
