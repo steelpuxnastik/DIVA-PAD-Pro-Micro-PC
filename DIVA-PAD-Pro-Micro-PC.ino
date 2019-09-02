@@ -105,8 +105,8 @@ void loop(void) {
     /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     }*/
-    addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
+    addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
   Gamepad.write();
 }
@@ -117,39 +117,6 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
     result |= (digitalRead(pin_table[i]) << (7 - i));
   }
   return result ^ pin_logic;
-}
-
-void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
-  Gamepad.xAxis(0);
-  Gamepad.yAxis(0);
-  Gamepad.zAxis(0);
-  Gamepad.rxAxis(0);
-  Gamepad.ryAxis(0);
-  Gamepad.rzAxis(0);
-  if((serial_data_byte >> 7) & 0x01) {
-    Gamepad.yAxis(MIN16);
-  }
-  if((serial_data_byte >> 6) & 0x01) {
-    Gamepad.yAxis(MAX16);
-  }
-  if((serial_data_byte >> 5) & 0x01) {
-    Gamepad.zAxis(MIN8);
-  }
-  if((serial_data_byte >> 4) & 0x01) {
-    Gamepad.zAxis(MIN8);
-  }
-  if((serial_data_byte >> 3) & 0x01) {
-    Gamepad.xAxis(MIN16);
-  }
-  if((serial_data_byte >> 2) & 0x01) {
-    Gamepad.xAxis(MAX16);
-  }
-  if((serial_data_byte >> 1) & 0x01) {
-    Gamepad.rxAxis(MIN16);
-  }
-  if((serial_data_byte >> 0) & 0x01) {
-    Gamepad.rxAxis(MAX16);
-  }
 }
 
 void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
@@ -186,6 +153,39 @@ void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned cha
   else{
     Gamepad.release(R1);
     flagR = 0;
+  }
+}
+
+void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
+  Gamepad.xAxis(0);
+  Gamepad.yAxis(0);
+  Gamepad.zAxis(0);
+  Gamepad.rxAxis(0);
+  Gamepad.ryAxis(0);
+  Gamepad.rzAxis(0);
+  if((serial_data_byte >> 7) & 0x01) {
+    Gamepad.yAxis(MIN16);
+  }
+  if((serial_data_byte >> 6) & 0x01) {
+    Gamepad.yAxis(MAX16);
+  }
+  if((serial_data_byte >> 5) & 0x01) {
+    Gamepad.zAxis(MIN8);
+  }
+  if((serial_data_byte >> 4) & 0x01) {
+    Gamepad.zAxis(MIN8);
+  }
+  if((serial_data_byte >> 3) & 0x01) {
+    Gamepad.xAxis(MIN16);
+  }
+  if((serial_data_byte >> 2) & 0x01) {
+    Gamepad.xAxis(MAX16);
+  }
+  if((serial_data_byte >> 1) & 0x01) {
+    Gamepad.rxAxis(MIN16);
+  }
+  if((serial_data_byte >> 0) & 0x01) {
+    Gamepad.rxAxis(MAX16);
   }
 }
 
