@@ -70,6 +70,8 @@ const int button_direct_pin_table[BUTTON_NUM] = {
 unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
+int flagL = 0;
+int flagR = 0;
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
