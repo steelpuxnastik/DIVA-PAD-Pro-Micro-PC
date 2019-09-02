@@ -4,9 +4,9 @@
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
 #define BUFFER_SIZE 5
 
-#define CIRCLE 2
-#define CROSS 1
-#define SQUARE 3
+#define CIRCLE 3
+#define CROSS 2
+#define SQUARE 1
 #define TRIANGLE 4
 
 #define LL 19
@@ -20,14 +20,14 @@
 #define L1 5
 #define R1 6
 
-#define L2 17
-#define R2 18
+#define L2 7
+#define R2 8
 
-#define L3 9
-#define R3 10
+#define L3 11
+#define R3 12
 
-#define SHARE 7
-#define OPTION 8
+#define SHARE 9
+#define OPTION 10
 
 #define TOUCH 14
 #define PS 13
@@ -36,7 +36,7 @@
 #define CROSS_PIN 5
 #define SQUARE_PIN 6
 #define TRIANGLE_PIN 7
-#define START_PIN 16
+#define START_PIN 15
 
 #define LED_STRIP_PIN 0
 //#define TIMING_CHECK_PIN 8
