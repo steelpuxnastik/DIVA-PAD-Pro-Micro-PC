@@ -31,26 +31,22 @@
 
 #define TOUCH 14
 #define PS 13
-#define FAKE 33
 
 #define CIRCLE_PIN 4
 #define CROSS_PIN 5
 #define SQUARE_PIN 6
 #define TRIANGLE_PIN 7
-#define FAKE_PIN 18
-#define START_PIN 9
-#define L1_PIN 15
-#define R1_PIN 18
+#define START_PIN 16
 
 #define LED_STRIP_PIN 0
-#define TIMING_CHECK_PIN 8
+//#define TIMING_CHECK_PIN 8
 #define SERIAL_DEBUG_PIN 10
-#define EXT_POWER_CHECK_PIN 14
-#define ENABLE_PIN 16
+//#define EXT_POWER_CHECK_PIN 14
+//#define ENABLE_PIN 16
 
-#define BUTTON_NUM 8
-#define LED_NUM 4
-#define LED_STRIP_NUM 30
+#define BUTTON_NUM 5
+//#define LED_NUM 4
+//#define LED_STRIP_NUM 30
 
 #define MIN16 -32768
 #define MAX16 32767
@@ -62,13 +58,13 @@ const unsigned char axis_serial_table[8] = {
 };
 
 const unsigned char button_direct_table[8] = {
-	TRIANGLE, SQUARE, CROSS, CIRCLE, FAKE, OPTION, L1, R1
+	TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, 0, 0, 0
 };
 
-const unsigned char button_direct_logic = 0b00001000;
+const unsigned char button_direct_logic = 0b00000000;
 
 const int button_direct_pin_table[BUTTON_NUM] = {
-	TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, FAKE_PIN, START_PIN, L1_PIN, R1_PIN
+	TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN
 };
 
 unsigned char button_data_byte = 0;
@@ -79,25 +75,21 @@ unsigned char serial_data_byte[BUFFER_SIZE] = {};
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
-void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte_left, unsigned char serial_data_byte_right);
 void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 
 void setup(void) {
 	for(int i = 0; i < BUTTON_NUM; i++) {
 		pinMode(button_direct_pin_table[i], INPUT_PULLUP);
 	}
-	pinMode(TIMING_CHECK_PIN, OUTPUT);
-	pinMode(ENABLE_PIN, INPUT_PULLUP);
-	pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
-	Serial.begin(9600);
+	//pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
+	//Serial.begin(9600);
 	Wire.begin(); //このボードをI2Cマスターとして設定
 	Wire.setClock(400000L);
 	Gamepad.begin();
 }
 
 void loop(void) {
-	digitalWrite(TIMING_CHECK_PIN, 1);
-	if(digitalRead(ENABLE_PIN)) {
 		data_bytes_count = 0;
 		for(int i = 0; i < BUFFER_SIZE; i++) {
 			serial_data_byte[i] = 0;
@@ -108,16 +100,12 @@ void loop(void) {
 			serial_data_byte[data_bytes_count] = Wire.read();
 			data_bytes_count++;
 		}
-  	if(!digitalRead(SERIAL_DEBUG_PIN)) {
+  	/*if(!digitalRead(SERIAL_DEBUG_PIN)) {
   	  sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
-  	}
+  	}*/
 		addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
 		addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
-    addHIDCypressLRReportFromTable(serial_data_byte[0], button_direct_table, BUTTON_NUM);
-		digitalWrite(TIMING_CHECK_PIN, 0);
-	} else {
-		Gamepad.releaseAll();
-	}
+    addHIDCypressLRReportFromTable(serial_data_byte[1],serial_data_byte[4]);
 	Gamepad.write();
 }
 
@@ -162,30 +150,18 @@ void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *bu
 	}
 }
 
-void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
-  if((serial_data_byte >> 7) & 0x01) {
-    Gamepad.press(button_table[0]);
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
+  if(serial_data_byte_left & 0b11100000) {
+    Gamepad.press(L1);
   }
-  if((serial_data_byte >> 6) & 0x01) {
-    Gamepad.press(button_table[1]);
+  else{
+    Gamepad.release(L1);
   }
-  if((serial_data_byte >> 5) & 0x01) {
-    Gamepad.press(button_table[2]);
+  if(serial_data_byte_right & 0b00011100) {
+    Gamepad.press(R1);
   }
-  if((serial_data_byte >> 4) & 0x01) {
-    Gamepad.press(button_table[3]);
-  }
-  if((serial_data_byte >> 3) & 0x01) {
-    Gamepad.press(button_table[4]);
-  }
-  if((serial_data_byte >> 2) & 0x01) {
-    Gamepad.press(button_table[5]);
-  }
-  if((serial_data_byte >> 1) & 0x01) {
-    Gamepad.press(button_table[6]);
-  }
-  if((serial_data_byte >> 0) & 0x01) {
-    Gamepad.press(button_table[7]);
+  else{
+    Gamepad.release(R1);
   }
 }
 
