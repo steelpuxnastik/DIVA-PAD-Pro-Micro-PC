@@ -4,9 +4,9 @@
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
 #define BUFFER_SIZE 5
 
-#define CIRCLE 3
-#define CROSS 2
-#define SQUARE 1
+#define CIRCLE 2
+#define CROSS 1
+#define SQUARE 3
 #define TRIANGLE 4
 
 #define LL 19
@@ -20,31 +20,33 @@
 #define L1 5
 #define R1 6
 
-#define L2 7
-#define R2 8
+#define L2 17
+#define R2 18
 
-#define L3 11
-#define R3 12
+#define L3 9
+#define R3 10
 
-#define SHARE 9
-#define OPTION 10
+#define SHARE 7
+#define OPTION 8
 
-#define PS 13
 #define TOUCH 14
+#define PS 13
 
 #define CIRCLE_PIN 4
 #define CROSS_PIN 5
 #define SQUARE_PIN 6
 #define TRIANGLE_PIN 7
-#define START_PIN 15 //перенести на 8 пин
+#define START_PIN 16
 
-//#define LED_STRIP_PIN 0
+#define LED_STRIP_PIN 0
 //#define TIMING_CHECK_PIN 8
 #define SERIAL_DEBUG_PIN 10
 //#define EXT_POWER_CHECK_PIN 14
 //#define ENABLE_PIN 16
 
 #define BUTTON_NUM 5
+//#define LED_NUM 4
+//#define LED_STRIP_NUM 30
 
 #define MIN16 -32768
 #define MAX16 32767
@@ -68,8 +70,6 @@ const int button_direct_pin_table[BUTTON_NUM] = {
 unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
-int flagL = 0;
-int flagR = 0;
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
@@ -84,7 +84,7 @@ void setup(void) {
   }
   //pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
   //Serial.begin(9600);
-  Wire.begin();
+  Wire.begin(); //このボードをI2Cマスターとして設定
   Wire.setClock(400000L);
   Gamepad.begin();
 }
@@ -103,8 +103,8 @@ void loop(void) {
     /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     }*/
-    addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
     addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
+    addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
   Gamepad.write();
 }
@@ -115,6 +115,39 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
     result |= (digitalRead(pin_table[i]) << (7 - i));
   }
   return result ^ pin_logic;
+}
+
+void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
+  Gamepad.xAxis(0);
+  Gamepad.yAxis(0);
+  Gamepad.zAxis(0);
+  Gamepad.rxAxis(0);
+  Gamepad.ryAxis(0);
+  Gamepad.rzAxis(0);
+  if((serial_data_byte >> 7) & 0x01) {
+    Gamepad.yAxis(MIN16);
+  }
+  if((serial_data_byte >> 6) & 0x01) {
+    Gamepad.yAxis(MAX16);
+  }
+  if((serial_data_byte >> 5) & 0x01) {
+    Gamepad.zAxis(MIN8);
+  }
+  if((serial_data_byte >> 4) & 0x01) {
+    Gamepad.zAxis(MIN8);
+  }
+  if((serial_data_byte >> 3) & 0x01) {
+    Gamepad.xAxis(MIN16);
+  }
+  if((serial_data_byte >> 2) & 0x01) {
+    Gamepad.xAxis(MAX16);
+  }
+  if((serial_data_byte >> 1) & 0x01) {
+    Gamepad.rxAxis(MIN16);
+  }
+  if((serial_data_byte >> 0) & 0x01) {
+    Gamepad.rxAxis(MAX16);
+  }
 }
 
 void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
@@ -151,39 +184,6 @@ void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned cha
   else{
     Gamepad.release(R1);
     flagR = 0;
-  }
-}
-
-void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num) {
-  Gamepad.xAxis(0);
-  Gamepad.yAxis(0);
-  Gamepad.zAxis(0);
-  Gamepad.rxAxis(0);
-  Gamepad.ryAxis(0);
-  Gamepad.rzAxis(0);
-  if((serial_data_byte >> 7) & 0x01) {
-    Gamepad.yAxis(MIN16);
-  }
-  if((serial_data_byte >> 6) & 0x01) {
-    Gamepad.yAxis(MAX16);
-  }
-  if((serial_data_byte >> 5) & 0x01) {
-    Gamepad.zAxis(MIN8);
-  }
-  if((serial_data_byte >> 4) & 0x01) {
-    Gamepad.zAxis(MIN8);
-  }
-  if((serial_data_byte >> 3) & 0x01) {
-    Gamepad.xAxis(MIN16);
-  }
-  if((serial_data_byte >> 2) & 0x01) {
-    Gamepad.xAxis(MAX16);
-  }
-  if((serial_data_byte >> 1) & 0x01) {
-    Gamepad.rxAxis(MIN16);
-  }
-  if((serial_data_byte >> 0) & 0x01) {
-    Gamepad.rxAxis(MAX16);
   }
 }
 
