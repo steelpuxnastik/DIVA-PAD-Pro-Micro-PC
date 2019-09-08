@@ -2,6 +2,7 @@
 #include <Wire.h>
 
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
+#define ARDUINO_I2C_SLAVE_ADDRESS 0x07
 #define BUFFER_SIZE 5
 
 #define CIRCLE 3
@@ -38,15 +39,9 @@
 #define TRIANGLE_PIN 7
 #define START_PIN 15
 
-#define LED_STRIP_PIN 0
-//#define TIMING_CHECK_PIN 8
 #define SERIAL_DEBUG_PIN 10
-//#define EXT_POWER_CHECK_PIN 14
-//#define ENABLE_PIN 16
 
 #define BUTTON_NUM 5
-//#define LED_NUM 4
-//#define LED_STRIP_NUM 30
 
 #define MIN16 -32768
 #define MAX16 32767
@@ -70,6 +65,7 @@ const int button_direct_pin_table[BUTTON_NUM] = {
 unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
+//int data_bytes_count2 = 0;
 int flagL = 0;
 int flagR = 0;
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
@@ -85,14 +81,15 @@ void setup(void) {
     pinMode(button_direct_pin_table[i], INPUT_PULLUP);
   }
   //pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
-  //Serial.begin(9600);
-  Wire.begin(); //このボードをI2Cマスターとして設定
+  Serial.begin(9600);
+  Wire.begin();
   Wire.setClock(400000L);
   Gamepad.begin();
 }
 
 void loop(void) {
     data_bytes_count = 0;
+    //data_bytes_count2 = 0;
     for(int i = 0; i < BUFFER_SIZE; i++) {
       serial_data_byte[i] = 0;
     }
@@ -102,13 +99,20 @@ void loop(void) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
     }
+    
+    /*while(data_bytes_count2 < BUFFER_SIZE) {
+      Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
+      Wire.write(serial_data_byte[data_bytes_count2]);
+      data_bytes_count2++;
+      Wire.endTransmission();
+    }*/
     /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     }*/
     addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
     addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
-  Gamepad.write();
+    Gamepad.write();
 }
 
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic) {
