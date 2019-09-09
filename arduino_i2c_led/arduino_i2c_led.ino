@@ -12,18 +12,12 @@ void receiveEvent();
 
 void setup(void) {
   Wire.begin(ARDUINO_I2C_SLAVE_ADDRESS);
-  Wire.setClock(400000L);
-  //Wire.onReceive(receiveEvent);
+  //Wire.setClock(400000L);
+  Wire.onReceive(receiveEvent);
   Serial.begin(9600);
 }
 
 void loop(void) {
-    //Wire.requestFrom(ARDUINO_I2C_SLAVE_ADDRESS, BUFFER_SIZE);
-    //if(!digitalRead(SERIAL_DEBUG_PIN)) {
-      while(Wire.available() && data_bytes_count < BUFFER_SIZE) {
-      serial_data_byte[data_bytes_count] = Wire.read();
-      data_bytes_count++;
-    }
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);
 }
 
@@ -50,6 +44,11 @@ void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], in
   Serial.write(send_data, len);
 }
 
-/*void receiveEvent(int howMany)
+void receiveEvent(int howMany)
 {
-}*/
+  data_bytes_count = 0;
+  while(Wire.available() && data_bytes_count < BUFFER_SIZE) {
+  serial_data_byte[data_bytes_count] = Wire.read();
+  data_bytes_count++;
+  }
+}

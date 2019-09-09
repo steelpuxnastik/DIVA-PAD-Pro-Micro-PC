@@ -65,7 +65,7 @@ const int button_direct_pin_table[BUTTON_NUM] = {
 unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
-//int data_bytes_count2 = 0;
+int data_bytes_count_send = 0;
 int flagL = 0;
 int flagR = 0;
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
@@ -89,7 +89,7 @@ void setup(void) {
 
 void loop(void) {
     data_bytes_count = 0;
-    //data_bytes_count2 = 0;
+    data_bytes_count_send = 0;
     for(int i = 0; i < BUFFER_SIZE; i++) {
       serial_data_byte[i] = 0;
     }
@@ -99,13 +99,12 @@ void loop(void) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
     }
-    
-    /*while(data_bytes_count2 < BUFFER_SIZE) {
-      Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
-      Wire.write(serial_data_byte[data_bytes_count2]);
-      data_bytes_count2++;
-      Wire.endTransmission();
-    }*/
+    Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
+    while(data_bytes_count_send < BUFFER_SIZE) {
+      Wire.write(serial_data_byte[data_bytes_count_send]);
+      data_bytes_count_send++;      
+    }
+    Wire.endTransmission();
     /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     }*/
