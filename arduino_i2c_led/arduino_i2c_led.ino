@@ -21,8 +21,9 @@ CRGB leds[NUM_LEDS];
 
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 int data_bytes_count = 0;
+int brightness_n = 255;
 
-void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex);
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 void receiveEvent();
 void ChangePalettePeriodically();
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
@@ -44,63 +45,54 @@ void setup(void) {
 		currentBlending = LINEARBLEND;
 	
 		Wire.begin(ARDUINO_I2C_SLAVE_ADDRESS);
-		//Wire.setClock(400000L);
 		Wire.onReceive(receiveEvent);
-		Serial.begin(115200);
+		//Serial.begin(9600);
 }
 
 void loop(void) {
 		DefaultSliderPalette();
 	 
 		static uint8_t startIndex = 0;
-		startIndex = startIndex + 3; // скорость движения
-		takeSliderTouchedArea(serial_data_byte, BUFFER_SIZE, startIndex);
+		startIndex = startIndex + 1; // скорость движения
+		takeSliderTouchedArea(serial_data_byte, BUFFER_SIZE);
 		FillLEDsFromPaletteColors(startIndex);
 	 
 		FastLED.show();
 		FastLED.delay(1000 / UPDATES_PER_SECOND);
 }
 
-void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex) {
-	uint8_t brightness = 255;
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size) {
 	int len = BUFFER_SIZE * 9 + 2;
 	int led_i = 0;
-	int serDataToLed[8] = {};
 	int serDataToLed_i = 0;
 	for(int i = 1; i < buffer_size; i++) {
+		if(i == 1){
+			led_i = LED_i2c_buffer_1;
+		}
+		if(i == 2){
+			led_i = LED_i2c_buffer_2;
+		}
+		if(i == 3){
+			led_i = LED_i2c_buffer_3;
+		}
+		if(i == 4){
+			led_i = LED_i2c_buffer_4;
+		}
 		for(int j = 0; j < 9; j++) {
 			if(j < 8) {
 				if((serial_data_byte[i] >> (7 - j)) & 0x01) {
-					if(i == 1){
-						led_i = LED_i2c_buffer_1;
-					}
-					if(i == 2){
-						led_i = LED_i2c_buffer_2;
-					}
-					if(i == 3){
-						led_i = LED_i2c_buffer_3;
-					}
-					if(i == 4){
-						led_i = LED_i2c_buffer_4;
-					}
 					for(int l = 0; l < 8; l++){
 						if(bitRead(serial_data_byte[i], l) == 1){
-							serDataToLed[serDataToLed_i] = (l * 2) + led_i;
-							serDataToLed_i++;
+							//brightness_n = 50;
+							leds[(l *2) + led_i] = CRGB::White;
+							leds[((l *2) + led_i)+1] = CRGB::White;
 						}
 					}
-					leds[led_i]= ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-					leds[led_i+1]= ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-					colorIndex += 3;
 				} else {
-					//c = '_';
+					
 				}
 			} 
 		}
-	}
-	for (int i = 0; i < sizeof(serDataToLed); ++i)
-	{
-		Serial.println(serDataToLed[i]);
 	}
 }
 
@@ -115,7 +107,7 @@ void receiveEvent(int howMany)
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
-		uint8_t brightness = 255;
+		uint8_t brightness = brightness_n;
 	 
 		for( int i = 0; i < NUM_LEDS; i++) {
 				leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
