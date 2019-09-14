@@ -22,7 +22,7 @@ CRGB leds[NUM_LEDS];
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 int data_bytes_count = 0;
 
-void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex);
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex);
 void receiveEvent();
 void ChangePalettePeriodically();
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
@@ -54,14 +54,14 @@ void loop(void) {
 	 
 		static uint8_t startIndex = 0;
 		startIndex = startIndex + 3; // скорость движения
-		sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE, startIndex);
+		takeSliderTouchedArea(serial_data_byte, BUFFER_SIZE, startIndex);
 		FillLEDsFromPaletteColors(startIndex);
 	 
 		FastLED.show();
 		FastLED.delay(1000 / UPDATES_PER_SECOND);
 }
 
-void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex) {
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size, uint8_t colorIndex) {
 	uint8_t brightness = 255;
 	int len = BUFFER_SIZE * 9 + 2;
 	int led_i = 0;
