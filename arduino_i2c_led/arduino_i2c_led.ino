@@ -4,7 +4,7 @@
 #define LED_PIN     5 //Пин на ардуине с которого подается сигнал на ленту
 #define NUM_LEDS    60 //количество светодиодов в ленте
 #define BRIGHTNESS  64 //яркость ленты
-#define LED_TYPE    WS2812 //тип ленты
+#define LED_TYPE    WS2812B //тип ленты
 #define COLOR_ORDER GRB //цветовая модель
 CRGB leds[NUM_LEDS];
  
@@ -22,11 +22,15 @@ CRGB leds[NUM_LEDS];
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 int data_bytes_count = 0;
 int brightness_n = 255;
+boolean touchFlag = false;
 
 void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 void receiveEvent();
 void ChangePalettePeriodically();
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
+void fadeall();
+void fadeLight();
+void sliderMovementHighlighting(int pixels);
 
 CRGBPalette16 currentPalette;
 TBlendType    currentBlending;
@@ -82,23 +86,20 @@ void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buff
 				if((serial_data_byte[i] >> (7 - j)) & 0x01) {
 					for(int l = 0; l < 8; l++){
 						if(bitRead(serial_data_byte[i], l) == 1){
-							brightness_n = 0;
-							leds[led_i - (l *2)] = CRGB::White;
-							leds[(led_i - (l *2))-1] = CRGB::White;
-							FastLED.show();
+							touchFlag = true;
+							//leds[led_i - (l *2)] = CRGB::White;
+							//leds[(led_i - (l *2))-1] = CRGB::White;
+							sliderMovementHighlighting(led_i - (l *2));
 						}
 						else{
-							brightness_n = 255;
+							touchFlag = false;
+							//brightness_n = 255;
 						}
-
 					}
-				} else {
-					
 				}
 			} 
 		}
 	}
-	//brightness_n = 255;
 }
 
 void receiveEvent(int howMany)
@@ -115,12 +116,54 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 		uint8_t brightness = brightness_n;
 	 
 		for( int i = 0; i < NUM_LEDS; i++) {
-				leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-				colorIndex += 3;
+			if(touchFlag){
+				//uint8_t brightness = brightness_n - i;
+				fadeall();
+			}
+			else{
+				//fadeLight();
+			}
+				leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
+				colorIndex += 1;
 		}
+
 }
  
 void DefaultSliderPalette()
 {
 		currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;
+}
+
+void fadeall() 
+{ 
+	/*long seconds = seconds16();
+	long secPlusThree = seconds + 1;
+	while(seconds16() <= secPlusThree){*/
+	
+		for(int i = 0; i < NUM_LEDS; i++) 
+			{ 
+			leds[i].nscale8( 192 );
+			//FastLED.delay(1000 / UPDATES_PER_SECOND);
+			//fadeToBlackBy( leds, NUM_LEDS, 20);
+
+		} 
+	//}
+		//fadeToBlackBy( leds, NUM_LEDS, 20);
+}
+
+void fadeLight()
+{
+	for(int i = 0; i < NUM_LEDS; i++) 
+	{ 
+		//leds[i].fadeToBlackBy( 64 );
+		leds[i].fadeLightBy( 64 );
+	} 
+}
+
+void sliderMovementHighlighting(int pixels){
+	leds[pixels].maximizeBrightness();
+	leds[pixels] = CRGB::Snow;
+	leds[pixels-1] = CRGB::Snow;
+	FastLED.show();
+	fadeall();
 }
