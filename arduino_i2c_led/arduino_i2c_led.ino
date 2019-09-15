@@ -4,17 +4,17 @@
 #define LED_PIN     5 //Пин на ардуине с которого подается сигнал на ленту
 #define NUM_LEDS    60 //количество светодиодов в ленте
 #define BRIGHTNESS  64 //яркость ленты
-#define LED_TYPE    WS2811 //тип ленты
+#define LED_TYPE    WS2812 //тип ленты
 #define COLOR_ORDER GRB //цветовая модель
 CRGB leds[NUM_LEDS];
  
 #define UPDATES_PER_SECOND 100
 
 //LED-Slider Map
-#define LED_i2c_buffer_1 0
-#define LED_i2c_buffer_2 15
-#define LED_i2c_buffer_3 31
-#define LED_i2c_buffer_4 47
+#define ledI2CBuffer_1 15
+#define ledI2CBuffer_2 31
+#define ledI2CBuffer_3 47
+#define ledI2CBuffer_4 63
 
 #define ARDUINO_I2C_SLAVE_ADDRESS 0x07
 #define BUFFER_SIZE 5
@@ -64,29 +64,33 @@ void loop(void) {
 void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size) {
 	int len = BUFFER_SIZE * 9 + 2;
 	int led_i = 0;
-	int serDataToLed_i = 0;
 	for(int i = 1; i < buffer_size; i++) {
 		if(i == 1){
-			led_i = LED_i2c_buffer_1;
+			led_i = ledI2CBuffer_1;
 		}
 		if(i == 2){
-			led_i = LED_i2c_buffer_2;
+			led_i = ledI2CBuffer_2;
 		}
 		if(i == 3){
-			led_i = LED_i2c_buffer_3;
+			led_i = ledI2CBuffer_3;
 		}
 		if(i == 4){
-			led_i = LED_i2c_buffer_4;
+			led_i = ledI2CBuffer_4;
 		}
 		for(int j = 0; j < 9; j++) {
 			if(j < 8) {
 				if((serial_data_byte[i] >> (7 - j)) & 0x01) {
 					for(int l = 0; l < 8; l++){
 						if(bitRead(serial_data_byte[i], l) == 1){
-							//brightness_n = 50;
-							leds[(l *2) + led_i] = CRGB::White;
-							leds[((l *2) + led_i)+1] = CRGB::White;
+							brightness_n = 0;
+							leds[led_i - (l *2)] = CRGB::White;
+							leds[(led_i - (l *2))-1] = CRGB::White;
+							FastLED.show();
 						}
+						else{
+							brightness_n = 255;
+						}
+
 					}
 				} else {
 					
@@ -94,6 +98,7 @@ void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buff
 			} 
 		}
 	}
+	//brightness_n = 255;
 }
 
 void receiveEvent(int howMany)
@@ -115,106 +120,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 		}
 }
  
-// Этот фрагмент скетча демонстрирует несколько разных
-// цветовых палитр. В библиотеку FasLED уже встроено несколько
-// палитровых шаблонов: RainbowColors_p, RainbowStripeColors_p,
-// OceanColors_p, CloudColors_p, LavaColors_p, ForestColors_p и
-// PartyColors_p.
-//
-// Кроме того, вы можете создавать собственные палитры или даже
-// написать код, создающий палитры прямо на ходу.
-// Ниже продемонстрировано, как все это сделать.
- 
 void DefaultSliderPalette()
 {
-		/*uint8_t secondHand = (millis() / 1000) % 60;
-		static uint8_t lastSecond = 99;*/
-
 		currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;
-	 
-		/*if( lastSecond != secondHand) {
-				lastSecond = secondHand;
-				if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-				//if( secondHand == 10)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
-				//if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
-				//if( secondHand == 20)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
-				//if( secondHand == 25)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
-				//if( secondHand == 30)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
-				//if( secondHand == 35)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
-				//if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
-				//if( secondHand == 45)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
-				//if( secondHand == 50)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
-				//if( secondHand == 55)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
-		}*/
 }
- 
-// Эта функция заполняет палитру совершенно случайными цветами.
- 
-/*void SetupTotallyRandomPalette()
-{
-		for( int i = 0; i < 16; i++) {
-				currentPalette[i] = CHSV( random8(), 255, random8());
-		}
-}*/
- 
-// Эта функция делает палитру из черных и белых линий.
-// Поскольку палитра – это, в сущности, массив
-// из шестнадцати CRGB-цветов, для ее создания можно использовать
-// различные функции fill_* – вроде fill_solid(), fill_gradient(),
-// fill_rainbow() и т.д.
- 
-/*void SetupBlackAndWhiteStripedPalette()
-{
-		// сначала делаем все фрагменты черными...
-		fill_solid( currentPalette, 16, CRGB::Black);
-		// ...а потом делаем каждый четвертый фрагмент белым:
-		currentPalette[0] = CRGB::White;
-		currentPalette[4] = CRGB::White;
-		currentPalette[8] = CRGB::White;
-		currentPalette[12] = CRGB::White;
-	 
-}*/
- 
-// Эта функция заполняет палитру фиолетовыми и зелеными полосами.
- 
-/*void SetupPurpleAndGreenPalette()
-{
-		CRGB purple = CHSV( HUE_PURPLE, 255, 255);
-		CRGB green  = CHSV( HUE_GREEN, 255, 255);
-		CRGB black  = CRGB::Black;
-	 
-		currentPalette = CRGBPalette16(
-																	 green,  green,  black,  black,
-																	 purple, purple, black,  black,
-																	 green,  green,  black,  black,
-																	 purple, purple, black,  black );
-}*/
- 
-// Фрагмент кода ниже показывает, как создать статичную палитру,
-// хранящуюся в памяти PROGMEM (т.е. во flash-памяти).
-// Этот тип памяти, как правило, просторней, чем RAM.
-// Статичная палитра вроде той, создание которой показано ниже,
-// занимает, как правило, 64 байта flash-памяти.
- 
-/*const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
-{
-		CRGB::Red,
-		CRGB::Gray, // белый – слишком яркий свет
-								// по сравнению с красным и синим
-		CRGB::Blue,
-		CRGB::Black,
-	 
-		CRGB::Red,
-		CRGB::Gray,
-		CRGB::Blue,
-		CRGB::Black,
-	 
-		CRGB::Red,
-		CRGB::Red,
-		CRGB::Gray,
-		CRGB::Gray,
-		CRGB::Blue,
-		CRGB::Blue,
-		CRGB::Black,
-		CRGB::Black
-};*/
