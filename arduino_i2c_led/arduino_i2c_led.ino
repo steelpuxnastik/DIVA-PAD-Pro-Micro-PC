@@ -1,11 +1,11 @@
 #include <Wire.h>
 #include <FastLED.h>
 
-#define LED_PIN     5 //Пин на ардуине с которого подается сигнал на ленту
-#define NUM_LEDS    60 //количество светодиодов в ленте
-#define BRIGHTNESS  64 //яркость ленты
-#define LED_TYPE    WS2812B //тип ленты
-#define COLOR_ORDER GRB //цветовая модель
+#define LED_PIN     5 
+#define NUM_LEDS    60 
+#define BRIGHTNESS  64 
+#define LED_TYPE    WS2812B 
+#define COLOR_ORDER GRB 
 CRGB leds[NUM_LEDS];
  
 #define UPDATES_PER_SECOND 100
@@ -24,15 +24,15 @@ int data_bytes_count = 0;
 int brightness_n = 255;
 boolean touchFlag = false;
 
-void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
-void receiveEvent();
-void DefaultSliderPalette();
-void FillLEDsFromPaletteColors(uint8_t colorIndex);
-void fadeall();
-void fadeLight();
-void setPaletteBrightnessDown();
-void setPaletteBrightnessUp();
-void sliderMovementHighlighting(int pixels);
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size); //обработка и получение адреса светодиода в зависимости от нажатого сигмента сенсорной панели
+void receiveEvent(); //получение данных по I2C с сенсорной панели
+void DefaultSliderPalette(); //палитра что используется при простое и бездействии
+void FillLEDsFromPaletteColors(uint8_t colorIndex); //функция заполнения палитрой ленты + проба внедрить условия, чтоб ее приглушить для отображения чего-то другого
+void fadeall(); //попытка сделать плавное приглушение света от максимума до нуля. Работоспособность не подтверждена
+void fadeLight(); //попытка сделать плавное наращивание яркости от 0 до максимума. Оказалось, что внутри использована вообще не та функция 
+void setPaletteBrightnessDown(); //попытка плавного управления яркостью палитры через "яркость", от максимума до 0. Собственно, с плавностью большие проблемы, так как ни циклы, не задержки не дают визуального резульатата, но создают ощутимые задержки. Уменьшаем яркость для того, чтоб отображать в это время что-то другое
+void setPaletteBrightnessUp(); //попытка управления наростания яркости палитры, когда "что-то другое" показывать не нужно 
+void sliderMovementHighlighting(int pixels); //функция подсвечивания мест прикосновения к сенсорной панели
 
 CRGBPalette16 currentPalette;
 TBlendType    currentBlending;
@@ -47,9 +47,6 @@ void setup(void)
  
 		FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
 		FastLED.setBrightness(BRIGHTNESS);
-	 
-		currentPalette = RainbowColors_p;
-		currentBlending = LINEARBLEND;
 	
 		Wire.begin(ARDUINO_I2C_SLAVE_ADDRESS);
 		Wire.onReceive(receiveEvent);
@@ -58,10 +55,10 @@ void setup(void)
 
 void loop(void) 
 {
-		//DefaultSliderPalette();
+		DefaultSliderPalette();
 	 
-		static uint8_t startIndex = 1; // скорость движения
-		//startIndex = startIndex + 1; // скорость движения
+		static uint8_t startIndex = 0; 
+		startIndex = startIndex + 1; // скорость движения
 		takeSliderTouchedArea(serial_data_byte, BUFFER_SIZE);
 		FillLEDsFromPaletteColors(startIndex);
 	 
@@ -91,8 +88,8 @@ void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buff
 				if((serial_data_byte[i] >> (7 - j)) & 0x01) {
 					for(int l = 0; l < 8; l++){
 						if(bitRead(serial_data_byte[i], l) == 1){
-							touchFlag = true;
-							sliderMovementHighlighting(led_i - (l *2));
+							touchFlag = true; //флаг, если прикосновение к сенсорной панели существует
+							sliderMovementHighlighting(led_i - (l *2)); //передача функции подсвеченивания мест прикосновения координат светодиодов
 						}
 						else{
 							touchFlag = false;
@@ -115,17 +112,16 @@ void receiveEvent(int howMany)
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
-		uint8_t brightness = brightness_n;
-	 
 		for( int i = 0; i < NUM_LEDS; i++) {
-			if(touchFlag){
+			if(touchFlag){ //если есть прикосновение, то снизить яркость палитры, или выключить ее
 				//fadeall();
 				setPaletteBrightnessDown();
 			}
-			else{
-				setPaletteBrightnessUp();
+			else{ // поднять яркость палитры
+				//setPaletteBrightnessUp();
 			}
-				leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
+				uint8_t brightness = brightness_n;
+				leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending); //заливка палитры
 				colorIndex += 1;
 		}
 
@@ -139,11 +135,11 @@ void DefaultSliderPalette()
 
 void fadeall() 
 {
-	for( int i = 0 ; i < 10; i++ ) {
+	//for( int i = 0 ; i < 10; i++ ) {
    		for( int led = 0 ; led < NUM_LEDS ; led++ ) {
-       		leds[led].nscale8( sin8(i) );
+       		leds[led].nscale8( sin8(led) );
    		}
-	}
+	//}
 		//fadeToBlackBy( leds, NUM_LEDS, 20);
 }
 
@@ -158,19 +154,22 @@ void fadeLight()
 
 void setPaletteBrightnessDown()
 {
-	for (int i = 0; i < 255; ++i)
-	{
-		brightness_n--;
-		FastLED.delay(2);
-	}
+	//for (int i = 0; i < 256; ++i)
+	//{
+		/*if (brightness_n == 0)
+			break;
+		brightness_n--;*/
+		brightness_n = 0;
+	//}
 }
 
 void setPaletteBrightnessUp()
 {
-	for (int i = 0; i < 255; ++i)
+	for (int i = 0; i <= 255; ++i)
 	{
+		/*if (brightness_n == 255)
+			break;*/
 		brightness_n++;
-		FastLED.delay(2);
 	}
 }
 
