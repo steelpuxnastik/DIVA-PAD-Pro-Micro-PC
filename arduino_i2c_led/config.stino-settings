@@ -1,0 +1,8 @@
+{
+    "board@arduino": "Arduino Nano", 
+    "option_Processor@Arduino Nano": "ATmega328P (Old Bootloader)", 
+    "package": "Arduino IDE", 
+    "platform": "arduino", 
+    "programmer": "AVR ISP", 
+    "version": "avr"
+}

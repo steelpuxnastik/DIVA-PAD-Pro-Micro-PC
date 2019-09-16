@@ -1,0 +1,7 @@
+{
+    "board@arduino": "Arduino/Genuino Micro", 
+    "package": "Arduino IDE", 
+    "platform": "arduino", 
+    "programmer": "AVR ISP", 
+    "version": "avr"
+}

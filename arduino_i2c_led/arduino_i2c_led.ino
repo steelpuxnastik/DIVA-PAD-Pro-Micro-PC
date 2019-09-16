@@ -26,10 +26,12 @@ boolean touchFlag = false;
 
 void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 void receiveEvent();
-void ChangePalettePeriodically();
+void DefaultSliderPalette();
 void FillLEDsFromPaletteColors(uint8_t colorIndex);
 void fadeall();
 void fadeLight();
+void setPaletteBrightnessDown();
+void setPaletteBrightnessUp();
 void sliderMovementHighlighting(int pixels);
 
 CRGBPalette16 currentPalette;
@@ -38,7 +40,8 @@ TBlendType    currentBlending;
 extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
-void setup(void) {
+void setup(void) 
+{
 		delay(3000);// небольшая задержка для того, чтобы цепь
 					// «устаканилась» после включения питания
  
@@ -53,11 +56,12 @@ void setup(void) {
 		//Serial.begin(9600);
 }
 
-void loop(void) {
-		DefaultSliderPalette();
+void loop(void) 
+{
+		//DefaultSliderPalette();
 	 
-		static uint8_t startIndex = 0;
-		startIndex = startIndex + 1; // скорость движения
+		static uint8_t startIndex = 1; // скорость движения
+		//startIndex = startIndex + 1; // скорость движения
 		takeSliderTouchedArea(serial_data_byte, BUFFER_SIZE);
 		FillLEDsFromPaletteColors(startIndex);
 	 
@@ -65,7 +69,8 @@ void loop(void) {
 		FastLED.delay(1000 / UPDATES_PER_SECOND);
 }
 
-void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size) {
+void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size) 
+{
 	int len = BUFFER_SIZE * 9 + 2;
 	int led_i = 0;
 	for(int i = 1; i < buffer_size; i++) {
@@ -87,13 +92,10 @@ void takeSliderTouchedArea(unsigned char serial_data_byte[BUFFER_SIZE], int buff
 					for(int l = 0; l < 8; l++){
 						if(bitRead(serial_data_byte[i], l) == 1){
 							touchFlag = true;
-							//leds[led_i - (l *2)] = CRGB::White;
-							//leds[(led_i - (l *2))-1] = CRGB::White;
 							sliderMovementHighlighting(led_i - (l *2));
 						}
 						else{
 							touchFlag = false;
-							//brightness_n = 255;
 						}
 					}
 				}
@@ -117,11 +119,11 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 	 
 		for( int i = 0; i < NUM_LEDS; i++) {
 			if(touchFlag){
-				//uint8_t brightness = brightness_n - i;
-				fadeall();
+				//fadeall();
+				setPaletteBrightnessDown();
 			}
 			else{
-				//fadeLight();
+				setPaletteBrightnessUp();
 			}
 				leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
 				colorIndex += 1;
@@ -131,23 +133,17 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
  
 void DefaultSliderPalette()
 {
-		currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;
+		currentPalette = RainbowColors_p;
+		currentBlending = LINEARBLEND;
 }
 
 void fadeall() 
-{ 
-	/*long seconds = seconds16();
-	long secPlusThree = seconds + 1;
-	while(seconds16() <= secPlusThree){*/
-	
-		for(int i = 0; i < NUM_LEDS; i++) 
-			{ 
-			leds[i].nscale8( 192 );
-			//FastLED.delay(1000 / UPDATES_PER_SECOND);
-			//fadeToBlackBy( leds, NUM_LEDS, 20);
-
-		} 
-	//}
+{
+	for( int i = 0 ; i < 10; i++ ) {
+   		for( int led = 0 ; led < NUM_LEDS ; led++ ) {
+       		leds[led].nscale8( sin8(i) );
+   		}
+	}
 		//fadeToBlackBy( leds, NUM_LEDS, 20);
 }
 
@@ -160,7 +156,26 @@ void fadeLight()
 	} 
 }
 
-void sliderMovementHighlighting(int pixels){
+void setPaletteBrightnessDown()
+{
+	for (int i = 0; i < 255; ++i)
+	{
+		brightness_n--;
+		FastLED.delay(2);
+	}
+}
+
+void setPaletteBrightnessUp()
+{
+	for (int i = 0; i < 255; ++i)
+	{
+		brightness_n++;
+		FastLED.delay(2);
+	}
+}
+
+void sliderMovementHighlighting(int pixels)
+{
 	leds[pixels].maximizeBrightness();
 	leds[pixels] = CRGB::Snow;
 	leds[pixels-1] = CRGB::Snow;
