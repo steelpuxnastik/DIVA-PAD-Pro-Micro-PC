@@ -37,11 +37,13 @@
 #define CROSS_PIN 5
 #define SQUARE_PIN 6
 #define TRIANGLE_PIN 7
+#define L_PIN 8
+#define R_PIN 9
 #define START_PIN 15
 
 #define SERIAL_DEBUG_PIN 10
 
-#define BUTTON_NUM 5
+#define BUTTON_NUM 7
 
 #define MIN16 -32768
 #define MAX16 32767
@@ -53,13 +55,13 @@ const unsigned char axis_serial_table[8] = {
 };
 
 const unsigned char button_direct_table[8] = {
-  TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, 0, 0, 0
+  TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, L1, R1, 0
 };
 
 const unsigned char button_direct_logic = 0b00000000;
 
 const int button_direct_pin_table[BUTTON_NUM] = {
-  TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN
+  TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN, L_PIN, R_PIN
 };
 
 unsigned char button_data_byte = 0;
