@@ -1,8 +1,8 @@
-#include "HID-Project.h"
+#include <HID-Project.h>
 #include <Wire.h>
 
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
-#define ARDUINO_I2C_SLAVE_ADDRESS 0x07
+//#define ARDUINO_I2C_SLAVE_ADDRESS 0x07
 #define BUFFER_SIZE 5
 
 #define CIRCLE 3
@@ -33,9 +33,9 @@
 #define TOUCH 14
 #define PS 13
 
-#define CIRCLE_PIN 4
+#define CIRCLE_PIN 6
 #define CROSS_PIN 5
-#define SQUARE_PIN 6
+#define SQUARE_PIN 4
 #define TRIANGLE_PIN 7
 #define L_PIN 8
 #define R_PIN 9
@@ -83,7 +83,7 @@ void setup(void) {
     pinMode(button_direct_pin_table[i], INPUT_PULLUP);
   }
   //pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
-  Serial.begin(9600);
+  //Serial.begin(9600);
   Wire.begin();
   Wire.setClock(400000L);
   Gamepad.begin();
@@ -101,12 +101,12 @@ void loop(void) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
     }
-    Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
+    /*Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
     while(data_bytes_count_send < BUFFER_SIZE) {
       Wire.write(serial_data_byte[data_bytes_count_send]);
       data_bytes_count_send++;      
     }
-    Wire.endTransmission();
+    Wire.endTransmission();*/
     /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
       sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     }*/
