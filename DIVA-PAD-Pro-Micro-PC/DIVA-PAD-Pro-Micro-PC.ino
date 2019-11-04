@@ -88,7 +88,6 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
 void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte);
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
-void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right);
 void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 
 void setup(void) {
