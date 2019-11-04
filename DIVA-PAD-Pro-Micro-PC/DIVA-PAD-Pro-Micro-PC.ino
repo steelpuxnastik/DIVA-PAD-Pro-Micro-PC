@@ -3,7 +3,6 @@
 #include <Wire.h>
 
 #define PSOC_I2C_SLAVE_ADDRESS 0x08
-//#define ARDUINO_I2C_SLAVE_ADDRESS 0x07
 #define BUFFER_SIZE 5
 
 #define CIRCLE 3
@@ -51,8 +50,6 @@
 #define LED_NUM 4
 #define LED_STRIP_NUM 30
 
-//#define SERIAL_DEBUG_PIN 10
-
 #define BUTTON_NUM 7
 
 #define MIN16 -32768
@@ -80,12 +77,7 @@ const int led_direct_pin_table[LED_NUM] = {
 
 unsigned char button_data_byte = 0;
 
-int flagL = 0;
-int flagR = 0;
-
-
 int data_bytes_count = 0;
-//int data_bytes_count_send = 0;
 
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 
@@ -106,7 +98,6 @@ void setup(void) {
   for(int i = 0; i < LED_NUM; i++) {
     pinMode(led_direct_pin_table[i], OUTPUT);
   }
-  //pinMode(SERIAL_DEBUG_PIN, INPUT_PULLUP);
   //Serial.begin(9600);
   Wire.begin();
   Wire.setClock(400000L);
@@ -119,7 +110,6 @@ void setup(void) {
 
 void loop(void) {
     data_bytes_count = 0;
-    //data_bytes_count_send = 0;
     for(int i = 0; i < BUFFER_SIZE; i++) {
       serial_data_byte[i] = 0;
     }
@@ -129,16 +119,7 @@ void loop(void) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
     }
-    /*Wire.beginTransmission(ARDUINO_I2C_SLAVE_ADDRESS);
-    while(data_bytes_count_send < BUFFER_SIZE) {
-      Wire.write(serial_data_byte[data_bytes_count_send]);
-      data_bytes_count_send++;      
-    }
-    Wire.endTransmission();*/
-    /*if(!digitalRead(SERIAL_DEBUG_PIN)) {
-      sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
-    }*/
-    addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
+    //sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
     addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
         int touched = 0;
@@ -189,43 +170,6 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
 void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte) {
   for(int i = 0; i < LED_NUM; i++) {
     digitalWrite(led_table[i], !((led_data_byte >> (7 - i)) & 0x01));
-  }
-}
-
-void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
-  if(serial_data_byte_left & 0b11100000) { //проверка на нажатие на первые три пикселя сенсорной панели
-    if (serial_data_byte == 0b00000000){  //проверка, есть ли движение руки при этом
-    flagL++;
-    if(flagL == 100){ //через сколько циктов выполнения вышеописанных условий выполнится условие (можно подобрать наиболее подходящие настройки изменив число)
-    Gamepad.press(L1);
-    flagL = 0;
-  }
-  }
-    else{
-    Gamepad.release(L1);
-    flagL = 0;
-  }
-  }
-  else{
-    Gamepad.release(L1);
-    flagL = 0;
-  }
-  if(serial_data_byte_right & 0b00011100) {
-    if (serial_data_byte == 0b00000000){
-    flagR++;
-    if(flagR == 100){
-    Gamepad.press(R1);
-    flagR = 0;
-  }
-  }
-    else{
-    Gamepad.release(R1);
-    flagR = 0;
-  }
-  }
-  else{
-    Gamepad.release(R1);
-    flagR = 0;
   }
 }
 
