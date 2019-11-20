@@ -104,7 +104,7 @@ void setup(void) {
   strip.begin();
   strip.setBrightness(128);
   strip.show();
-  selfTestLEDs();
+  selfTestLEDs(led_direct_pin_table);
 }
 
 void loop(void) {
@@ -142,11 +142,20 @@ void loop(void) {
     Gamepad.write();
 }
 
-void selfTestLEDs(void) {
+void selfTestLEDs(int *led_table) {
   unsigned char data_byte;
   for(int i = 0; i < LED_NUM + 1; i++) {
     data_byte = 0x01 << (7 - i);
     writeDirectlyConnectedLEDs(led_direct_pin_table, data_byte);
+    delay(200);
+  }
+  for(int i = 0; i < 3; i++){
+    for(int j = 0; j < LED_NUM; j++){
+    digitalWrite(led_table[j], LOW);
+    }
+    delay(200);
+    for(int j = 0; j < LED_NUM; j++)
+    digitalWrite(led_table[j], HIGH);
     delay(200);
   }
   for(int i = 0; i < LED_STRIP_NUM; i++) {
