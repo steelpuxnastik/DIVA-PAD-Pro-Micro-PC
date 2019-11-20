@@ -114,6 +114,7 @@ void loop(void) {
     }
     Wire.requestFrom(PSOC_I2C_SLAVE_ADDRESS, BUFFER_SIZE);
     button_data_byte = readDirectlyConnectedButtons(button_direct_pin_table, button_direct_logic);
+    writeDirectlyConnectedLEDs(led_direct_pin_table, button_data_byte);
     while(Wire.available() && data_bytes_count < BUFFER_SIZE) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
