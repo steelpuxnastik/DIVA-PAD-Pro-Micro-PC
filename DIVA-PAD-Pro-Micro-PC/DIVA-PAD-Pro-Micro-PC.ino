@@ -62,7 +62,7 @@ const unsigned char axis_serial_table[8] = {
 };
 
 const unsigned char button_direct_table[8] = {
-  TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, L1, R1, 0
+  TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, L2, R2, 0
 };
 
 const unsigned char button_direct_logic = 0b00001110;
@@ -79,14 +79,18 @@ unsigned char button_data_byte = 0;
 
 int data_bytes_count = 0;
 
+int flagL = 0;
+int flagR = 0;
+
 unsigned char serial_data_byte[BUFFER_SIZE] = {};
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_STRIP_NUM, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
-void selfTestLEDs(void);
+void selfTestLEDs(int *led_table);
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic);
 void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte);
 void addHIDaxisReportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right);
 void addHIDreportFromTable(unsigned char serial_data_byte, unsigned char *button_table, int contents_of_table_num);
 void sendRecievedI2CDataWithUART(unsigned char serial_data_byte[BUFFER_SIZE], int buffer_size);
 
@@ -102,7 +106,7 @@ void setup(void) {
   Wire.setClock(400000L);
   Gamepad.begin();
   strip.begin();
-  strip.setBrightness(128);
+  strip.setBrightness(255);
   strip.show();
   selfTestLEDs(led_direct_pin_table);
 }
@@ -119,23 +123,24 @@ void loop(void) {
       serial_data_byte[data_bytes_count] = Wire.read();
       data_bytes_count++;
     }
-    //sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);   
+    //sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);
+    addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
     addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
         int touched = 0;
     for(int i = 0; i < BUFFER_SIZE - 1; i++) {
       for(int j = 0; j < 8; j++) {
         if((serial_data_byte[i + 1] >> (7 - j)) & 0x01) {
-          strip.setPixelColor(i * 8 + j, 0x80, 0xFF, 0xCC);
+          strip.setPixelColor(i * 8 + j, 0xFF, 0xFF, 0xFF);
           touched = 1;
         } else {
-          strip.setPixelColor(i * 8 + j, 0x0E, 0x10, 0x10);
+          strip.setPixelColor(i * 8 + j, 1, 1, 1);
         }
       }
     }
     if(touched == 0) {
       for(int i = 0; i < LED_STRIP_NUM; i++) {
-        strip.setPixelColor(i, 0x1C, 0x20, 0x20);
+        strip.setPixelColor(i, 3, 5, 5);
       }
     }
     strip.show();
@@ -166,6 +171,16 @@ void selfTestLEDs(int *led_table) {
     strip.show();
     delay(50);
   }
+  for(int i = LED_STRIP_NUM; i > 0; i--) {
+    strip.setPixelColor(i, 0xFF, 0xFF, 0xFF);
+    strip.show();
+    delay(50);
+  }
+  for(int i = 0; i < LED_STRIP_NUM; i++) {
+    strip.setPixelColor(i, 3, 5, 5);
+    strip.show();
+    delay(50);
+  }
 }
 
 unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_logic) {
@@ -179,6 +194,43 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
 void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte) {
   for(int i = 0; i < LED_NUM; i++) {
     digitalWrite(led_table[i], !((led_data_byte >> (7 - i)) & 0x01));
+  }
+}
+
+void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
+  if(serial_data_byte_left & 0b11100000) { //проверка на нажатие на первые три пикселя сенсорной панели
+    if (serial_data_byte == 0b00000000){  //проверка, есть ли движение руки при этом
+    flagL++;
+    if(flagL == 100){ //через сколько циктов выполнения вышеописанных условий выполнится условие (можно подобрать наиболее подходящие настройки изменив число)
+    Gamepad.press(L1);
+    flagL = 0;
+  }
+  }
+    else{
+    Gamepad.release(L1);
+    flagL = 0;
+  }
+  }
+  else{
+    Gamepad.release(L1);
+    flagL = 0;
+  }
+  if(serial_data_byte_right & 0b00011100) {
+    if (serial_data_byte == 0b00000000){
+    flagR++;
+    if(flagR == 100){
+    Gamepad.press(R1);
+    flagR = 0;
+  }
+  }
+    else{
+    Gamepad.release(R1);
+    flagR = 0;
+  }
+  }
+  else{
+    Gamepad.release(R1);
+    flagR = 0;
   }
 }
 
