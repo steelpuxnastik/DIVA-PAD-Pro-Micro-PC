@@ -41,10 +41,10 @@
 #define R_PIN 9
 #define START_PIN 15
 
-#define CIRCLE_LED_PIN 18
-#define CROSS_LED_PIN 19
-#define SQUARE_LED_PIN 20
-#define TRIANGLE_LED_PIN 21
+#define CIRCLE_LED_PIN 21
+#define CROSS_LED_PIN 20
+#define SQUARE_LED_PIN 19
+#define TRIANGLE_LED_PIN 18
 
 #define LED_STRIP_PIN 0
 #define LED_NUM 4
@@ -65,7 +65,7 @@ const unsigned char button_direct_table[8] = {
   TRIANGLE, SQUARE, CROSS, CIRCLE, OPTION, L2, R2, 0
 };
 
-const unsigned char button_direct_logic = 0b00001110;
+const unsigned char button_direct_logic = 0b11111110;
 
 const int button_direct_pin_table[BUTTON_NUM] = {
   TRIANGLE_PIN, SQUARE_PIN, CROSS_PIN, CIRCLE_PIN, START_PIN, L_PIN, R_PIN
@@ -124,7 +124,6 @@ void loop(void) {
       data_bytes_count++;
     }
     //sendRecievedI2CDataWithUART(serial_data_byte, BUFFER_SIZE);
-    addHIDCypressLRReportFromTable(serial_data_byte[0], serial_data_byte[1],serial_data_byte[4]);
     addHIDaxisReportFromTable(serial_data_byte[0], axis_serial_table, 8);
     addHIDreportFromTable(button_data_byte, button_direct_table, BUTTON_NUM);
         int touched = 0;
@@ -194,43 +193,6 @@ unsigned char readDirectlyConnectedButtons(int *pin_table, unsigned char pin_log
 void writeDirectlyConnectedLEDs(int *led_table, unsigned char led_data_byte) {
   for(int i = 0; i < LED_NUM; i++) {
     digitalWrite(led_table[i], !((led_data_byte >> (7 - i)) & 0x01));
-  }
-}
-
-void addHIDCypressLRReportFromTable(unsigned char serial_data_byte, unsigned char serial_data_byte_left, unsigned char serial_data_byte_right) {
-  if(serial_data_byte_left & 0b11100000) { //проверка на нажатие на первые три пикселя сенсорной панели
-    if (serial_data_byte == 0b00000000){  //проверка, есть ли движение руки при этом
-    flagL++;
-    if(flagL == 100){ //через сколько циктов выполнения вышеописанных условий выполнится условие (можно подобрать наиболее подходящие настройки изменив число)
-    Gamepad.press(L1);
-    flagL = 0;
-  }
-  }
-    else{
-    Gamepad.release(L1);
-    flagL = 0;
-  }
-  }
-  else{
-    Gamepad.release(L1);
-    flagL = 0;
-  }
-  if(serial_data_byte_right & 0b00011100) {
-    if (serial_data_byte == 0b00000000){
-    flagR++;
-    if(flagR == 100){
-    Gamepad.press(R1);
-    flagR = 0;
-  }
-  }
-    else{
-    Gamepad.release(R1);
-    flagR = 0;
-  }
-  }
-  else{
-    Gamepad.release(R1);
-    flagR = 0;
   }
 }
 
